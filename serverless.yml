@@ -1,7 +1,7 @@
 service: serverless-oauth2
 provider:
   name: aws
-  runtime: nodejs6.10
+  runtime: nodejs12.x
   stage: ${opt:stage, self:custom.defaultStage}
   environment:
     GIT_HOSTNAME: "/ctrl-alt-del/oauth/${opt:stage, self:provider.stage}/GIT_HOSTNAME"
@@ -24,10 +24,10 @@ provider:
       Resource: "arn:aws:kms:${opt:region, self:provider.region}:*:key/${self:custom.kms_key.${opt:region, self:provider.region}.${self:provider.stage}}"
 
 custom:
-  defaultStage: dev
+  defaultStage: prod
   kms_key:
-    "us-east-1":
-      prod: "01660d80-64fb-4444-9b21-bb15ac2f97ec"
+    "eu-west-1":
+      prod: "998c7000-0b8a-4428-b953-0e08773a748e"
       dev: "foo"
 
 functions:
@@ -39,7 +39,7 @@ functions:
       - http:
           path: /auth
           method: get
-          cors: true               
+          cors: true
   callback:
     handler: auth.callback
     memorySize: 128
@@ -57,7 +57,7 @@ functions:
       - http:
           path: /success
           method: get
-          cors: true  
+          cors: true
   default:
     handler: auth.default
     memorySize: 128
@@ -66,7 +66,7 @@ functions:
       - http:
           path: /
           method: get
-          cors: true 
+          cors: true
 
 plugins:
   - serverless-plugin-optimize

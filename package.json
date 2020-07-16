@@ -8,31 +8,32 @@
   "private": true,
   "dependencies": {
     "randomstring": "^1.1.5",
-    "simple-oauth2": "^1.5.2"
+    "serverless": "^1.75.1",
+    "simple-oauth2": "^4.1.0"
   },
   "devDependencies": {
-    "npm": "^5.7.1",
-    "aws-sdk": "^2.12.0",
-    "aws-sdk-mock": "^1.6.1",
+    "aws-sdk": "^2.714.0",
+    "aws-sdk-mock": "^5.1.0",
     "babel-preset-es2015": "^6.24.1",
-    "chai": "^4.0.2",
-    "eslint": "^4.17.0",
-    "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.8.0",
-    "eslint-plugin-mocha": "^4.11.0",
-    "eslint-plugin-node": "^6.0.0",
-    "eslint-plugin-promise": "^3.6.0",
-    "mocha": "^3.2.0",
-    "nyc": "^11.2.1",
-    "serverless-offline": "^3.16.0",
-    "serverless-plugin-optimize": "^1.0.0-rc.15",
-    "sinon": "^2.1.0"
+    "chai": "^4.2.0",
+    "eslint": "^7.4.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-mocha": "^7.0.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "mocha": "^8.0.1",
+    "nyc": "^15.1.0",
+    "serverless-offline": "^6.4.0",
+    "serverless-plugin-optimize": "^4.1.4-rc.1",
+    "sinon": "^9.0.2"
   },
   "scripts": {
     "test": "IS_TEST=1 mocha",
     "coverage": "IS_TEST=1 nyc --check-coverage --lines 75 --per-file mocha",
     "coverage-report": "IS_TEST=1 nyc --check-coverage --report -r html mocha",
-    "lint": "node node_modules/eslint/bin/eslint.js --color ."
+    "lint": "node node_modules/eslint/bin/eslint.js --color .",
+    "update-dependencies": "npx npm-check-updates -u --packageFile package.json"
   },
   "standard": {
     "env": [

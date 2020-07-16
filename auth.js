@@ -1,4 +1,4 @@
-const simpleOauthModule = require('simple-oauth2');
+const { AuthorizationCode } = require('simple-oauth2');
 const randomstring = require('randomstring');
 const Secrets = require('./lib/secrets');
 
@@ -12,9 +12,8 @@ const secrets = new Secrets({
   OAUTH_SCOPES: 'repo,user',
 });
 
-
 function getScript(mess, content) {
-  return `<html><body><script>
+  return `<html lang="en"><body><script>
   (function() {
     function receiveMessage(e) {
       console.log("receiveMessage %o", e)
@@ -33,7 +32,7 @@ function getScript(mess, content) {
 
 module.exports.auth = (e, ctx, cb) => secrets.init()
   .then(() => {
-    const oauth2 = simpleOauthModule.create({
+    const oauth2 = new AuthorizationCode({
       client: {
         id: secrets.OAUTH_CLIENT_ID,
         secret: secrets.OAUTH_CLIENT_SECRET,
@@ -46,7 +45,7 @@ module.exports.auth = (e, ctx, cb) => secrets.init()
     });
 
     // Authorization uri definition
-    const authorizationUri = oauth2.authorizationCode.authorizeURL({
+    const authorizationUri = oauth2.authorizeURL({
       redirect_uri: secrets.REDIRECT_URL,
       scope: secrets.OAUTH_SCOPES,
       state: randomstring.generate(32),
@@ -64,7 +63,7 @@ module.exports.callback = (e, ctx, cb) => {
   let oauth2;
   secrets.init()
     .then(() => {
-      oauth2 = simpleOauthModule.create({
+      oauth2 = new AuthorizationCode({
         client: {
           id: secrets.OAUTH_CLIENT_ID,
           secret: secrets.OAUTH_CLIENT_SECRET,
@@ -79,7 +78,7 @@ module.exports.callback = (e, ctx, cb) => {
       const options = {
         code: e.queryStringParameters.code,
       };
-      return oauth2.authorizationCode.getToken(options);
+      return oauth2.getToken(options);
     })
     .then((result) => {
       const token = oauth2.accessToken.create(result);
