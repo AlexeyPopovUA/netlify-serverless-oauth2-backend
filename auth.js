@@ -1,19 +1,19 @@
-const { AuthorizationCode } = require('simple-oauth2');
-const randomstring = require('randomstring');
-const Secrets = require('./lib/secrets');
+const { AuthorizationCode } = require("simple-oauth2");
+const randomstring = require("randomstring");
+const Secrets = require("./lib/secrets");
 
 const secrets = new Secrets({
-  GIT_HOSTNAME: 'https://github.com',
-  OAUTH_TOKEN_PATH: '/login/oauth/access_token',
-  OAUTH_AUTHORIZE_PATH: '/login/oauth/authorize',
-  OAUTH_CLIENT_ID: 'foo',
-  OAUTH_CLIENT_SECRET: 'bar',
-  REDIRECT_URL: 'http://localhost:3000/callback',
-  OAUTH_SCOPES: 'repo,user',
+    GIT_HOSTNAME: "https://github.com",
+    OAUTH_TOKEN_PATH: "/login/oauth/access_token",
+    OAUTH_AUTHORIZE_PATH: "/login/oauth/authorize",
+    OAUTH_CLIENT_ID: "foo",
+    OAUTH_CLIENT_SECRET: "bar",
+    REDIRECT_URL: "http://localhost:3000/callback",
+    OAUTH_SCOPES: "repo,user"
 });
 
 function getScript(mess, content) {
-  return `<html lang="en"><meta charset="utf-8"/><body><script type="application/javascript">
+    return `<html lang="en"><meta charset="utf-8"/><body><script type="application/javascript">
   (function() {
     function receiveMessage(e) {
       console.log("receiveMessage %o", e)
@@ -30,98 +30,87 @@ function getScript(mess, content) {
   </script></body></html>`;
 }
 
-module.exports.auth = (e, ctx, cb) => {
-  return secrets.init()
-    .then(() => {
-      const oauth2 = new AuthorizationCode({
+module.exports.auth = async () => {
+    await secrets.init();
+
+    const oauth2 = new AuthorizationCode({
         client: {
-          id: secrets.OAUTH_CLIENT_ID,
-          secret: secrets.OAUTH_CLIENT_SECRET,
+            id: secrets.OAUTH_CLIENT_ID,
+            secret: secrets.OAUTH_CLIENT_SECRET
         },
         auth: {
-          tokenHost: secrets.GIT_HOSTNAME,
-          tokenPath: secrets.OAUTH_TOKEN_PATH,
-          authorizePath: secrets.OAUTH_AUTHORIZE_PATH,
-        },
-      });
+            tokenHost: secrets.GIT_HOSTNAME,
+            tokenPath: secrets.OAUTH_TOKEN_PATH,
+            authorizePath: secrets.OAUTH_AUTHORIZE_PATH
+        }
+    });
 
-      // Authorization uri definition
-      const authorizationUri = oauth2.authorizeURL({
+    // Authorization uri definition
+    const authorizationUri = oauth2.authorizeURL({
         redirect_uri: secrets.REDIRECT_URL,
         scope: secrets.OAUTH_SCOPES,
-        state: randomstring.generate(32),
-      });
+        state: randomstring.generate(32)
+    });
 
-      cb(null, {
+    return {
         statusCode: 302,
         headers: {
-          Location: authorizationUri,
-        },
-      });
-    });
+            Location: authorizationUri
+        }
+    };
 };
 
-module.exports.callback = (e, ctx, cb) => {
-  let oauth2;
-  secrets.init()
-    .then(() => {
-      oauth2 = new AuthorizationCode({
-        client: {
-          id: secrets.OAUTH_CLIENT_ID,
-          secret: secrets.OAUTH_CLIENT_SECRET,
-        },
-        auth: {
-          tokenHost: secrets.GIT_HOSTNAME,
-          tokenPath: secrets.OAUTH_TOKEN_PATH,
-          authorizePath: secrets.OAUTH_AUTHORIZE_PATH,
-        },
-      });
+module.exports.callback = async (e) => {
+    try {
+        await secrets.init();
 
-      const options = {
-        code: e.queryStringParameters.code,
-      };
-      return oauth2.getToken(options);
-    })
-    .then((result) => {
-      const token = result.token.access_token;
-      cb(
-        null,
-        {
-          statusCode: 200,
-          headers: {
-            'Content-Type': 'text/html',
-          },
-          body: getScript('success', {
-            token,
-            provider: 'github',
-          }),
-        },
-      );
-    })
-    .catch((err) => {
-      cb(null, {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'text/html',
-        },
-        body: getScript('error', err),
-      });
-    });
+        const oauth2 = new AuthorizationCode({
+            client: {
+                id: secrets.OAUTH_CLIENT_ID,
+                secret: secrets.OAUTH_CLIENT_SECRET
+            },
+            auth: {
+                tokenHost: secrets.GIT_HOSTNAME,
+                tokenPath: secrets.OAUTH_TOKEN_PATH,
+                authorizePath: secrets.OAUTH_AUTHORIZE_PATH
+            }
+        });
+
+        const options = {
+            code: e.queryStringParameters.code
+        };
+
+        const result = await oauth2.getToken(options);
+        const token = result.token.access_token;
+        return {
+            statusCode: 200,
+            headers: {
+                "Content-Type": "text/html"
+            },
+            body: getScript("success", {
+                token,
+                provider: "github"
+            })
+        };
+    } catch (err) {
+        return {
+            statusCode: 200,
+            headers: {
+                "Content-Type": "text/html"
+            },
+            body: getScript("error", err)
+        };
+    }
 };
 
-module.exports.success = (e, ctx, cb) => cb(
-  null,
-  {
+module.exports.success = async () => ({
     statusCode: 204,
-    body: '',
-  },
-);
+    body: ""
+});
 
-module.exports.default = (e, ctx, cb) => {
-  cb(null, {
+module.exports.default = async () => ({
     statusCode: 302,
     headers: {
-      Location: '/auth',
-    },
-  });
-};
+        Location: "/auth"
+    }
+});
