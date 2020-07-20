@@ -13,7 +13,7 @@ const secrets = new Secrets({
 });
 
 function getScript(mess, content) {
-  return `<html lang="en"><body><script>
+  return `<html lang="en"><meta charset="utf-8"/><body><script type="application/javascript">
   (function() {
     function receiveMessage(e) {
       console.log("receiveMessage %o", e)
@@ -30,34 +30,36 @@ function getScript(mess, content) {
   </script></body></html>`;
 }
 
-module.exports.auth = (e, ctx, cb) => secrets.init()
-  .then(() => {
-    const oauth2 = new AuthorizationCode({
-      client: {
-        id: secrets.OAUTH_CLIENT_ID,
-        secret: secrets.OAUTH_CLIENT_SECRET,
-      },
-      auth: {
-        tokenHost: secrets.GIT_HOSTNAME,
-        tokenPath: secrets.OAUTH_TOKEN_PATH,
-        authorizePath: secrets.OAUTH_AUTHORIZE_PATH,
-      },
-    });
+module.exports.auth = (e, ctx, cb) => {
+  return secrets.init()
+    .then(() => {
+      const oauth2 = new AuthorizationCode({
+        client: {
+          id: secrets.OAUTH_CLIENT_ID,
+          secret: secrets.OAUTH_CLIENT_SECRET,
+        },
+        auth: {
+          tokenHost: secrets.GIT_HOSTNAME,
+          tokenPath: secrets.OAUTH_TOKEN_PATH,
+          authorizePath: secrets.OAUTH_AUTHORIZE_PATH,
+        },
+      });
 
-    // Authorization uri definition
-    const authorizationUri = oauth2.authorizeURL({
-      redirect_uri: secrets.REDIRECT_URL,
-      scope: secrets.OAUTH_SCOPES,
-      state: randomstring.generate(32),
-    });
+      // Authorization uri definition
+      const authorizationUri = oauth2.authorizeURL({
+        redirect_uri: secrets.REDIRECT_URL,
+        scope: secrets.OAUTH_SCOPES,
+        state: randomstring.generate(32),
+      });
 
-    cb(null, {
-      statusCode: 302,
-      headers: {
-        Location: authorizationUri,
-      },
+      cb(null, {
+        statusCode: 302,
+        headers: {
+          Location: authorizationUri,
+        },
+      });
     });
-  });
+};
 
 module.exports.callback = (e, ctx, cb) => {
   let oauth2;
@@ -81,7 +83,7 @@ module.exports.callback = (e, ctx, cb) => {
       return oauth2.getToken(options);
     })
     .then((result) => {
-      const token = oauth2.accessToken.create(result);
+      const token = result.token.access_token;
       cb(
         null,
         {
@@ -90,7 +92,7 @@ module.exports.callback = (e, ctx, cb) => {
             'Content-Type': 'text/html',
           },
           body: getScript('success', {
-            token: token.token.access_token,
+            token,
             provider: 'github',
           }),
         },
