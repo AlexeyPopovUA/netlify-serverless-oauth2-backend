@@ -7,3 +7,4 @@ jspm_packages
 .nyc_output
 .vscode
 /.idea/
+/_optimize/
